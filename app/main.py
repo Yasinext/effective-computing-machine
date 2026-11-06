@@ -29,6 +29,10 @@ def main() -> int:
             level=getattr(logging, settings.log_level, logging.INFO),
             format="%(asctime)s %(levelname)s %(name)s %(message)s",
         )
+        # httpx logs complete request URLs at INFO. Telegram embeds the bot
+        # token in its URL, so these dependency logs must never reach journal.
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("httpcore").setLevel(logging.WARNING)
         backoffice = BackofficeClient(
             settings.backoffice_base_url,
             settings.backoffice_token,
