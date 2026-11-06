@@ -8,17 +8,26 @@ from .models import CheckResult, CheckStatus
 ALLOWED_EMOJIS = {"✅", "❌"}
 
 
-def _result_lines(result: CheckResult) -> list[str]:
+def _compact_result(result: CheckResult) -> str:
     status = result.status
     if status == CheckStatus.BONUS_BULUNDU:
-        return [f"Bonus: {html.escape(result.bonus_name or '')}", "Sonuç: ✅ Bonus kaydı bulundu."]
+        return f"✅ {html.escape(result.bonus_name or 'Bonus kaydı bulundu')}"
     if status == CheckStatus.BONUS_ISTEMIYOR:
-        return ["Bonus tercihi: Deneme bonusu istemiyorum", "Sonuç: Bonus talep edilmemiş."]
+        return "Deneme bonusu istemiyorum"
     if status == CheckStatus.BONUS_BULUNAMADI:
-        return ["Sonuç: ❌ FS Yansıması bulunamadı."]
+        return "❌ FS Yansıması bulunamadı."
     if status == CheckStatus.INCELEME_GEREKLI:
-        return ["Bonus: Kesinleştirilemedi", "Sonuç: Kontrol gerekli."]
-    return ["Bonus: Kontrol edilemedi", "Sonuç: ❌ API kontrolü tamamlanamadı."]
+        return "Kontrol gerekli."
+    return "❌ API kontrolü tamamlanamadı."
+
+
+STATUS_GROUPS = (
+    (CheckStatus.BONUS_BULUNDU, "Bonus kaydı bulunan"),
+    (CheckStatus.BONUS_ISTEMIYOR, "Bonus istemeyen"),
+    (CheckStatus.BONUS_BULUNAMADI, "FS yansıması bulunamayan"),
+    (CheckStatus.INCELEME_GEREKLI, "Kontrol gerekli"),
+    (CheckStatus.API_HATASI, "API hatası"),
+)
 
 
 def build_report(results: list[CheckResult], checked_at: datetime, next_run: datetime) -> str:
@@ -30,10 +39,16 @@ def build_report(results: list[CheckResult], checked_at: datetime, next_run: dat
         f"Kontrol edilen: {len(results)} üye",
         "",
     ]
-    for index, result in enumerate(results, start=1):
-        login = html.escape(result.client.login, quote=True)
-        lines.append(f"{index}. {login} ({result.client.client_id})")
-        lines.extend(_result_lines(result))
+    for status, heading in STATUS_GROUPS:
+        grouped = [result for result in results if result.status == status]
+        if not grouped:
+            continue
+        lines.append(heading)
+        for result in grouped:
+            login = html.escape(result.client.login, quote=True)
+            lines.append(
+                f"- {login} ({result.client.client_id}) — {_compact_result(result)}"
+            )
         lines.append("")
 
     lines.extend(

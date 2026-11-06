@@ -99,7 +99,7 @@ class Settings:
             telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", "").strip(),
             partner_id=_integer("PARTNER_ID", 1457),
             interval_minutes=_integer("CHECK_INTERVAL_MINUTES", 20),
-            recent_client_count=_integer("RECENT_CLIENT_COUNT", 4),
+            recent_client_count=_integer("RECENT_CLIENT_COUNT", 10),
             no_bonus_category_ids=_id_set("NO_BONUS_CATEGORY_IDS"),
             bonus_expected_category_ids=_id_set("BONUS_EXPECTED_CATEGORY_IDS"),
             report_timezone=timezone,

@@ -1,6 +1,6 @@
 # Extrabet kayıt bonusu kontrol botu
 
-Python 3.11+ ile çalışan bu servis, her döngüde BetConstruct Backoffice API'sinden alınan üyeleri `Created` zamanına göre sıralar, extrabet (`PartnerId=1457`) için en yeni dört üyeyi kontrol eder ve Telegram grubuna tek rapor gönderir.
+Python 3.11+ ile çalışan bu servis, her döngüde BetConstruct Backoffice API'sinden alınan üyeleri `Created` zamanına göre sıralar, extrabet (`PartnerId=1457`) için en yeni on üyeyi kontrol eder ve Telegram grubuna tek, durumlara göre gruplanmış rapor gönderir.
 
 ## Güvenlik ve doğruluk sınırları
 
