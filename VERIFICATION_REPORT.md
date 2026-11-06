@@ -31,7 +31,7 @@ Tarih: 6 Kasım 2026
 - İlk 20 üyelik hassas-verisiz korelasyonda kategori `907`: 1 hedef kayıt/1 üye; `908`: 0 hedef kayıt/11 üye; `909`: 0 hedef kayıt/8 üye görüldü.
 - Operatörün önceki belirlemesiyle birlikte sunucu yapılandırması `NO_BONUS_CATEGORY_IDS=909` ve `BONUS_EXPECTED_CATEGORY_IDS=907,908` olarak seçildi.
 - Doğrulanmış sayfalama modu eklendi; her canlı sayfada azalan `Created`, sabit `Count`, benzersiz ID ve boş-sayfa koşulları yeniden kontrol ediliyor.
-- İlk servis denemesinde `httpx` INFO erişim logunun Telegram token'ını URL içinde gösterebildiği tespit edildi. `httpx` ve `httpcore` log seviyeleri zorunlu olarak `WARNING` yapıldı; sonraki döngüde URL/token loglanmadığı doğrulanmalıdır.
+- İlk servis denemesinde `httpx` INFO erişim logunun Telegram token'ını URL içinde gösterebildiği tespit edildi. `httpx` ve `httpcore` log seviyeleri zorunlu olarak `WARNING` yapıldı. Düzeltme sonrası canlı döngüde journal'ın yalnız zamanlayıcı kayıtları içerdiği, URL/token loglanmadığı ve servisin yeniden başlatmasız aktif kaldığı doğrulandı.
 
 ## Hâlâ doğrulanması gerekenler
 
