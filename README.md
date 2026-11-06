@@ -4,9 +4,9 @@ Python 3.11+ ile çalışan bu servis, her döngüde BetConstruct Backoffice API
 
 ## Güvenlik ve doğruluk sınırları
 
-- Uygulama `OrderedItem=1` değerinin `Created` sıralaması olduğunu varsaymaz. Yanıttaki tüm kayıtları Python'da offset-aware `Created` değerine göre sıralar.
-- `Data.Count`, dönen `Data.Objects` sayısından büyükse yanıtın tüm üyeleri kapsamadığı kabul edilir. Doğrulanmamış sayfalama kullanılmaz; yanlış dört üye raporlamak yerine teknik hata raporu gönderilir.
-- `908` ve `909` için anlam atanmaz. `NO_BONUS_CATEGORY_IDS` ve `BONUS_EXPECTED_CATEGORY_IDS` yalnızca operatör gerçek veride doğruladıktan sonra doldurulmalıdır.
+- Uygulama varsayılan olarak `OrderedItem=1` değerinin `Created` sıralaması olduğunu varsaymaz. `GET_CLIENTS_CREATED_ORDER_VERIFIED=false` iken yanıt tüm sonuçları kapsamıyorsa yanlış dört üye raporlamak yerine teknik hata raporu gönderilir.
+- 6 Kasım 2026 canlı doğrulamasında `SkeepRows=0/20/40` çakışmayan ardışık sayfalar, `OrderedItem=1` ise sayfa sınırlarında azalan `Created` sırası döndürdü. Bu kurulumda doğrulanmış mod açıldığında uygulama sayfaları sırayla alır, her sayfa sınırında sıralamayı ve tekrarlı ID'leri yeniden denetler, hedef partner için yeterli üye bulunca durur ve son seçimi yine Python'da offset-aware `Created` değerine göre yapar.
+- Kategori ID'leri `.env.example` içinde boş bırakılır. Mevcut extrabet kurulumu için operatör belirlemesi ve canlı korelasyon sonucunda `NO_BONUS_CATEGORY_IDS=909`, `BONUS_EXPECTED_CATEGORY_IDS=907,908` kullanılır; başka partner veya ortamda bu değerler yeniden doğrulanmalıdır.
 - “Bonus kaydı bulundu”, hedef bonus kaydının API yanıtında mevcut olduğu anlamına gelir. `AcceptanceType`, `ResultType`, `CanAccept`, `Count` ve `PaidAmount` doğrulanmadığından oyuncunun bonusu fiilen kullanabildiğini kanıtlamaz.
 - Ham API yanıtları ve token'lar loglanmaz. Telegram'a yalnız kullanıcı adı ve ClientId gönderilir.
 
@@ -77,12 +77,11 @@ Güncellemeden önce mock testleri çalıştırın. Dosyaları kopyaladıktan so
 
 ## Gerçek veriyle zorunlu doğrulama kontrol listesi
 
-- [ ] Tarayıcı Network sekmesinde `Client/GetClients` gerçek istek gövdesini kaydedin; `SkeepRows`, `MaxRows`, `IsOrderedDesc` ve `OrderedItem` ad/değerlerini doğrulayın.
-- [ ] Farklı sayfalardaki kayıtları karşılaştırarak sunucu sıralamasının gerçekten `Created` alanına göre olup olmadığını belirleyin.
-- [ ] API'nin tek yanıtta en fazla kaç kayıt döndürdüğünü belirleyin. `Data.Count > len(Data.Objects)` oluyorsa gerçek sayfalama davranışını doğrulamadan canlıya çıkmayın.
-- [ ] Doğrulanmış sayfalama gerekiyorsa request/response örnekleriyle uygulama ve testleri güncelleyin; `SkeepRows` davranışını tahmin etmeyin.
-- [ ] Backoffice profil ekranında aynı üyeyi ve kategori metnini birlikte görerek `908`/`909` anlamlarını doğrulayın veya gerçek kategori sözlüğü endpoint'ini Network sekmesinden tespit edin.
-- [ ] “Deneme bonusu istemiyorum” ID'lerini `NO_BONUS_CATEGORY_IDS`, bonus beklenen ve uygunluğu doğrulanmış ID'leri `BONUS_EXPECTED_CATEGORY_IDS` içine yazın.
+- [x] `Client/GetClients` canlı isteğinde `SkeepRows`, `MaxRows`, `IsOrderedDesc` ve `OrderedItem` parametreleri denendi.
+- [x] `SkeepRows=0/20/40` sayfalarının çakışmadığı ve sayfa sınırlarında `Created` sırasının azalan olduğu doğrulandı.
+- [x] API'nin istenen 1000 kaydı tek yanıtta vermediği ve fiili sayfa boyutunun 20 olduğu gözlendi; korumalı sayfalama eklendi.
+- [x] Mevcut kurulum için kategori yapılandırması `909` istemiyor, `907,908` bonus bekleniyor olarak belirlendi ve canlı ID–bonus korelasyonuyla kontrol edildi.
+- [ ] Kategori metinlerini doğrudan döndüren bir API bulunursa ID→etiket eşlemesini ayrıca doğrulayın; mevcut `GetClients` yanıtı yalnız ID içeriyor.
 - [ ] Hedef bonus kayıtlarının `PartnerBonusId` ve `BonusType` çiftlerini gerçek yanıtta doğrulayın.
 - [ ] Bonus kaydı varlığının kullanılabilirlikten farklı olduğu kabulünü operasyon ekibiyle teyit edin.
 - [ ] Token'ın hareketsizlik/mutlak süre sınırını ve 401/403 davranışını test edin. Her 20 dakikalık çağrının token yenilediğini varsaymayın.

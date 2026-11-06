@@ -23,5 +23,8 @@ def settings() -> Settings:
         http_timeout_seconds=1,
         log_level="INFO",
         get_clients_max_rows=1000,
+        get_clients_page_size=20,
+        get_clients_max_pages=50,
+        get_clients_created_order_verified=False,
         http_retry_count=1,
     )

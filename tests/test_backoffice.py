@@ -78,3 +78,61 @@ def test_request_uses_documented_candidate_spelling_and_token() -> None:
     api = client(handler)
     assert api.get_clients(20) == []
     api.close()
+
+
+def test_verified_order_mode_pages_until_enough_partner_clients() -> None:
+    pages = {
+        0: [
+            {"Id": 4, "PartnerId": 999, "Created": "2026-11-06T12:00:00+03:00"},
+            {"Id": 3, "PartnerId": 1457, "Created": "2026-11-06T11:00:00+03:00"},
+        ],
+        2: [
+            {"Id": 2, "PartnerId": 999, "Created": "2026-11-06T10:00:00+03:00"},
+            {"Id": 1, "PartnerId": 1457, "Created": "2026-11-06T09:00:00+03:00"},
+        ],
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={"HasError": False, "Data": {"Count": 4, "Objects": pages[payload["SkeepRows"]]}},
+        )
+
+    api = client(handler)
+    objects = api.get_clients(
+        1000,
+        partner_id=1457,
+        required_count=2,
+        created_order_verified=True,
+        page_size=2,
+        max_pages=3,
+    )
+    assert [item["Id"] for item in objects] == [4, 3, 2, 1]
+    api.close()
+
+
+def test_verified_order_mode_rejects_non_descending_page_boundary() -> None:
+    pages = {
+        0: [{"Id": 2, "PartnerId": 1457, "Created": "2026-11-06T10:00:00+03:00"}],
+        1: [{"Id": 1, "PartnerId": 1457, "Created": "2026-11-06T11:00:00+03:00"}],
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={"HasError": False, "Data": {"Count": 2, "Objects": pages[payload["SkeepRows"]]}},
+        )
+
+    api = client(handler)
+    with pytest.raises(UnsafeSelectionError):
+        api.get_clients(
+            1000,
+            partner_id=1457,
+            required_count=2,
+            created_order_verified=True,
+            page_size=1,
+            max_pages=2,
+        )
+    api.close()

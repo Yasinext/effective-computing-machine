@@ -6,7 +6,7 @@ Tarih: 6 Kasım 2026
 
 - Python: 3.12.13 (proje gereksinimi: 3.11+)
 - Komut: `.venv/bin/python -m pytest -q`
-- Sonuç: `29 passed in 0.04s`
+- Sonuç: `31 passed in 0.04s`
 - `app/` ve `tests/` için bytecode derleme kontrolü başarılı.
 - `python -m app.main --help` başarılı.
 - Testlerde gerçek Backoffice veya Telegram bağlantısı kurulmadı; tüm HTTP davranışları mock yanıtlarla sınandı.
@@ -21,15 +21,23 @@ Tarih: 6 Kasım 2026
 - Her döngüde tek Telegram mesajı ve sonraki döngüde yeni mesaj.
 - HTML kaçışı, hassas alanların rapora girmemesi ve emoji kısıtı.
 
-## Canlı bağlantı olmadan doğrulanamayanlar
+## 6 Kasım 2026 canlı API doğrulaması
 
-1. `Client/GetClients` gövdesindeki `SkeepRows`, `MaxRows`, `IsOrderedDesc` ve `OrderedItem` parametrelerinin mevcut canlı API'deki kesin davranışı.
-2. `OrderedItem=1` değerinin gerçekten `Created` sıralaması olup olmadığı.
-3. API'nin maksimum sayfa boyutu ve güvenilir sayfalama davranışı. Uygulama bu nedenle `Data.Count > len(Data.Objects)` olduğunda yanlış sonuç üretmek yerine döngüyü teknik hatayla sonlandırır.
-4. `908` ve `909` kategori ID'lerinin metin karşılıkları. İki kategori yapılandırmasının varsayılanı bilerek boştur.
-5. Bonus kayıtlarındaki `AcceptanceType`, `ResultType`, `CanAccept`, `Count` ve `PaidAmount` alanlarının anlamları; kayıt varlığı gerçek kullanılabilirliği kanıtlamaz.
-6. Backoffice token'ının hareketsizlik veya mutlak süre sonu ve canlı 401/403 davranışı.
-7. Telegram botunun gerçek grup chat ID'si, gruptaki gönderim izni ve rate-limit davranışı.
-8. VPS'de reboot sonrası `systemd` otomatik başlatma davranışı.
+- Token ile `Client/GetClients` ve `Client/GetClientBonuses` çağrıları başarılı oldu.
+- API `MaxRows=1000` isteğine rağmen 20 kayıt döndürdü; güvenli durdurma mekanizması eksik sayfayı doğru biçimde yakaladı.
+- `SkeepRows=0`, `20` ve `40` istekleri çakışmayan ardışık sayfalar döndürdü.
+- Üç sayfada ve sayfa sınırlarında `OrderedItem=1` yanıtlarının `Created` değerleri azalan sıradaydı.
+- İlk sayfadaki 20 kaydın tamamı hedef partner `1457` içindi.
+- İlk 20 üyelik hassas-verisiz korelasyonda kategori `907`: 1 hedef kayıt/1 üye; `908`: 0 hedef kayıt/11 üye; `909`: 0 hedef kayıt/8 üye görüldü.
+- Operatörün önceki belirlemesiyle birlikte sunucu yapılandırması `NO_BONUS_CATEGORY_IDS=909` ve `BONUS_EXPECTED_CATEGORY_IDS=907,908` olarak seçildi.
+- Doğrulanmış sayfalama modu eklendi; her canlı sayfada azalan `Created`, sabit `Count`, benzersiz ID ve boş-sayfa koşulları yeniden kontrol ediliyor.
+
+## Hâlâ doğrulanması gerekenler
+
+1. Kategori metnini doğrudan döndüren doğrulanmış bir endpoint bulunmadı; `GetClients` yalnız `PartnerClientCategoryId` içeriyor. Mevcut eşleme operatör belirlemesine dayanıyor.
+2. Bonus kayıtlarındaki `AcceptanceType`, `ResultType`, `CanAccept`, `Count` ve `PaidAmount` alanlarının anlamları; kayıt varlığı gerçek kullanılabilirliği kanıtlamaz.
+3. Backoffice token'ının kesin hareketsizlik veya mutlak süre sonu ve canlı 401/403 davranışı.
+4. Telegram botunun gruptaki gönderim izni ve rate-limit davranışı.
+5. VPS'de reboot sonrası `systemd` otomatik başlatma davranışı.
 
 Bu maddeler tamamlanmadan canlı sonuçlar kesin operasyonel doğrulama olarak kabul edilmemelidir. Ayrıntılı adımlar README'deki “Gerçek veriyle zorunlu doğrulama kontrol listesi” bölümündedir.

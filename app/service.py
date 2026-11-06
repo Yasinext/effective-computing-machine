@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BackofficeProtocol(Protocol):
-    def get_clients(self, max_rows: int) -> list[dict]: ...
+    def get_clients(self, max_rows: int, **kwargs: object) -> list[dict]: ...
     def get_client_bonuses(self, client_id: int) -> list[dict]: ...
 
 
@@ -34,7 +34,14 @@ class BonusCheckService:
         )
         next_run = checked_at + timedelta(minutes=self.settings.interval_minutes)
         try:
-            objects = self.backoffice.get_clients(self.settings.get_clients_max_rows)
+            objects = self.backoffice.get_clients(
+                self.settings.get_clients_max_rows,
+                partner_id=self.settings.partner_id,
+                required_count=self.settings.recent_client_count,
+                created_order_verified=self.settings.get_clients_created_order_verified,
+                page_size=self.settings.get_clients_page_size,
+                max_pages=self.settings.get_clients_max_pages,
+            )
             clients = select_recent_clients(
                 objects, self.settings.partner_id, self.settings.recent_client_count
             )

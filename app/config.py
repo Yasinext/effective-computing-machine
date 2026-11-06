@@ -31,6 +31,15 @@ def _id_set(name: str) -> frozenset[int]:
         raise ConfigurationError(f"{name} virgülle ayrılmış sayısal ID'ler içermelidir") from exc
 
 
+def _boolean(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name, str(default)).strip().lower()
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    raise ConfigurationError(f"{name} true veya false olmalıdır")
+
+
 @dataclass(frozen=True)
 class Settings:
     backoffice_base_url: str
@@ -46,6 +55,9 @@ class Settings:
     http_timeout_seconds: int
     log_level: str
     get_clients_max_rows: int
+    get_clients_page_size: int
+    get_clients_max_pages: int
+    get_clients_created_order_verified: bool
     http_retry_count: int
 
     @classmethod
@@ -77,6 +89,11 @@ class Settings:
             http_timeout_seconds=_integer("HTTP_TIMEOUT_SECONDS", 20),
             log_level=os.getenv("LOG_LEVEL", "INFO").strip().upper(),
             get_clients_max_rows=_integer("GET_CLIENTS_MAX_ROWS", 1000),
+            get_clients_page_size=_integer("GET_CLIENTS_PAGE_SIZE", 20),
+            get_clients_max_pages=_integer("GET_CLIENTS_MAX_PAGES", 50),
+            get_clients_created_order_verified=_boolean(
+                "GET_CLIENTS_CREATED_ORDER_VERIFIED", False
+            ),
             http_retry_count=_integer("HTTP_RETRY_COUNT", 3),
         )
 

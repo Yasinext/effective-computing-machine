@@ -38,7 +38,7 @@ class FakeBackoffice:
     def __init__(self) -> None:
         self.failed_client = 2
 
-    def get_clients(self, max_rows: int) -> list[dict]:
+    def get_clients(self, max_rows: int, **kwargs: object) -> list[dict]:
         return [
             {"Id": i, "Login": f"u{i}", "PartnerId": 1457, "Created": f"2026-11-06T1{i}:00:00+03:00", "PartnerClientCategoryId": 908}
             for i in range(1, 5)
