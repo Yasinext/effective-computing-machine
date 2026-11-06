@@ -98,9 +98,11 @@ class TokenControl:
         try:
             self.validator(candidate)
             self.installer(candidate)
-        except ApiError:
-            LOGGER.warning("Backoffice token doğrulaması başarısız error=ApiError")
-            self.telegram.send_to(chat_id, "Token doğrulanamadı; mevcut token korunuyor.")
+        except (ApiError, OSError) as exc:
+            LOGGER.warning(
+                "Backoffice token güncellemesi başarısız error=%s", type(exc).__name__
+            )
+            self.telegram.send_to(chat_id, "Token güncellenemedi; mevcut token korunuyor.")
             return
         self.telegram.send_to(chat_id, "Backoffice token doğrulandı ve güncellendi.")
 

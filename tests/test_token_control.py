@@ -69,3 +69,21 @@ def test_authorized_private_user_can_replace_token_case_insensitively() -> None:
     assert installed == [candidate]
     assert telegram.deleted == [(100, 1), (100, 2)]
     assert telegram.sent[-1] == (100, "Backoffice token doğrulandı ve güncellendi.")
+
+
+def test_install_failure_is_reported_without_crashing() -> None:
+    telegram = FakeTelegram()
+
+    def fail_install(token: str) -> None:
+        raise OSError("read-only")
+
+    instance = TokenControl(
+        telegram,
+        frozenset({"authorized_user"}),
+        lambda token: None,
+        fail_install,
+        Event(),
+    )
+    instance.handle_update(update("authorized_user", "/token"))
+    instance.handle_update(update("authorized_user", "a" * 64, message_id=2))
+    assert telegram.sent[-1] == (100, "Token güncellenemedi; mevcut token korunuyor.")
