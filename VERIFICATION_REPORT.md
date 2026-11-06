@@ -32,6 +32,7 @@ Tarih: 6 Kasım 2026
 - Operatörün önceki belirlemesiyle birlikte sunucu yapılandırması `NO_BONUS_CATEGORY_IDS=909` ve `BONUS_EXPECTED_CATEGORY_IDS=907,908` olarak seçildi.
 - Doğrulanmış sayfalama modu eklendi; her canlı sayfada azalan `Created`, sabit `Count`, benzersiz ID ve boş-sayfa koşulları yeniden kontrol ediliyor.
 - İlk servis denemesinde `httpx` INFO erişim logunun Telegram token'ını URL içinde gösterebildiği tespit edildi. `httpx` ve `httpcore` log seviyeleri zorunlu olarak `WARNING` yapıldı. Düzeltme sonrası canlı döngüde journal'ın yalnız zamanlayıcı kayıtları içerdiği, URL/token loglanmadığı ve servisin yeniden başlatmasız aktif kaldığı doğrulandı.
+- Özel Telegram sohbetinden Backoffice token yenileme desteği eklendi. Grup mesajları ve izin listesi dışındaki kullanıcı adları sessizce yok sayılıyor; aday token canlı API'de doğrulanıyor, `0600` dosyaya atomik yazılıyor ve çalışan HTTP istemcisine yeniden başlatmasız uygulanıyor.
 
 ## Hâlâ doğrulanması gerekenler
 

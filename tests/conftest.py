@@ -12,6 +12,7 @@ def settings() -> Settings:
     return Settings(
         backoffice_base_url="https://backoffice.example/api/en/",
         backoffice_token="test-token",
+        backoffice_token_file=None,
         telegram_bot_token="telegram-test-token",
         telegram_chat_id="-100123",
         partner_id=1457,
@@ -27,4 +28,5 @@ def settings() -> Settings:
         get_clients_max_pages=50,
         get_clients_created_order_verified=False,
         http_retry_count=1,
+        telegram_admin_usernames=frozenset(),
     )

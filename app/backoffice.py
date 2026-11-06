@@ -35,6 +35,9 @@ class BackofficeClient:
     def close(self) -> None:
         self._client.close()
 
+    def update_token(self, token: str) -> None:
+        self._client.headers["authentication"] = token
+
     def __enter__(self) -> "BackofficeClient":
         return self
 
@@ -206,3 +209,10 @@ class BackofficeClient:
         if not isinstance(data, list) or not all(isinstance(item, dict) for item in data):
             raise ApiSchemaError("GetClientBonuses Data dizi değil")
         return data
+
+    def probe_authentication(self) -> None:
+        data = self._post(
+            "Client/GetClients",
+            {"SkeepRows": 0, "MaxRows": 1, "IsOrderedDesc": True, "OrderedItem": 1},
+        )
+        self._validate_clients_data(data)

@@ -31,6 +31,14 @@ def _id_set(name: str) -> frozenset[int]:
         raise ConfigurationError(f"{name} virgülle ayrılmış sayısal ID'ler içermelidir") from exc
 
 
+def _username_set(name: str) -> frozenset[str]:
+    return frozenset(
+        item.strip().lstrip("@").lower()
+        for item in os.getenv(name, "").split(",")
+        if item.strip().lstrip("@")
+    )
+
+
 def _boolean(name: str, default: bool = False) -> bool:
     raw = os.getenv(name, str(default)).strip().lower()
     if raw in {"1", "true", "yes", "on"}:
@@ -44,6 +52,7 @@ def _boolean(name: str, default: bool = False) -> bool:
 class Settings:
     backoffice_base_url: str
     backoffice_token: str
+    backoffice_token_file: Path | None
     telegram_bot_token: str
     telegram_chat_id: str
     partner_id: int
@@ -59,6 +68,7 @@ class Settings:
     get_clients_max_pages: int
     get_clients_created_order_verified: bool
     http_retry_count: int
+    telegram_admin_usernames: frozenset[str]
 
     @classmethod
     def from_env(cls, env_file: str | Path | None = None) -> "Settings":
@@ -75,9 +85,16 @@ class Settings:
         if not base_url.endswith("/"):
             base_url += "/"
 
+        token_file_raw = os.getenv("BACKOFFICE_TOKEN_FILE", "").strip()
+        token_file = Path(token_file_raw) if token_file_raw else None
+        backoffice_token = os.getenv("BACKOFFICE_TOKEN", "").strip()
+        if token_file is not None and token_file.is_file():
+            backoffice_token = token_file.read_text(encoding="utf-8").strip()
+
         return cls(
             backoffice_base_url=base_url,
-            backoffice_token=os.getenv("BACKOFFICE_TOKEN", "").strip(),
+            backoffice_token=backoffice_token,
+            backoffice_token_file=token_file,
             telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", "").strip(),
             telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", "").strip(),
             partner_id=_integer("PARTNER_ID", 1457),
@@ -95,6 +112,7 @@ class Settings:
                 "GET_CLIENTS_CREATED_ORDER_VERIFIED", False
             ),
             http_retry_count=_integer("HTTP_RETRY_COUNT", 3),
+            telegram_admin_usernames=_username_set("TELEGRAM_ADMIN_USERNAMES"),
         )
 
     def validate_runtime_secrets(self) -> None:

@@ -44,6 +44,19 @@ Sürekli mod başlangıçta hemen bir kontrol yapar, ardından sabit 20 dakikal�
 4. Grup kimliğini `TELEGRAM_CHAT_ID` olarak ayarlayın. Süper grup kimlikleri genellikle negatif bir sayıdır.
 5. `python -m app.main --once` ile tek raporu doğrulayın.
 
+### Özel mesajla Backoffice token yenileme
+
+İsteğe bağlı kontrol kanalı yalnız özel Telegram sohbetinde çalışır. Grup mesajları ve `TELEGRAM_ADMIN_USERNAMES` listesinde olmayan kullanıcılar hiçbir yanıt almadan yok sayılır.
+
+```dotenv
+BACKOFFICE_TOKEN_FILE=/var/lib/extrabet-bonus-bot/backoffice.token
+TELEGRAM_ADMIN_USERNAMES=denizgmb,ayhanq7
+```
+
+Yetkili kullanıcı botla özel konuşmada `/token` gönderir. Bot 60 saniye içinde gelecek bir sonraki özel mesajı aday token olarak alır, mesajı silmeye çalışır ve token'ı canlı Backoffice isteğiyle doğrular. Yalnız başarılı doğrulamadan sonra izinleri `0600` olan token dosyasını atomik biçimde değiştirir ve yeni token'ı servis yeniden başlamadan kullanır. Token hiçbir cevap veya log içinde gösterilmez.
+
+Kullanıcı adları değiştirilebilir olduğundan sayısal Telegram kullanıcı ID'leri daha güçlü bir yetkilendirme yöntemidir. Mevcut kullanıcı-adı modu operatörün açık tercihiyle sağlanmıştır; listedeki hesapların kullanıcı adı değişiklikleri düzenli kontrol edilmelidir.
+
 Webhook kullanan bir botta `getUpdates` çalışmayabilir. Bu durumda mevcut bot yönetim yöntemiyle chat ID'yi güvenli biçimde belirleyin; webhook'u üretimde rastgele kaldırmayın.
 
 ## Ubuntu/Debian VPS kurulumu
@@ -58,6 +71,8 @@ sudo chown -R extrabet-bot:extrabet-bot /opt/extrabet-bonus-bot
 sudo -u extrabet-bot python3.11 -m venv /opt/extrabet-bonus-bot/.venv
 sudo -u extrabet-bot /opt/extrabet-bonus-bot/.venv/bin/pip install -r /opt/extrabet-bonus-bot/requirements.txt
 sudo install -o root -g extrabet-bot -m 0640 .env.example /etc/extrabet-bonus-bot.env
+sudo install -d -o extrabet-bot -g extrabet-bot -m 0700 /var/lib/extrabet-bonus-bot
+sudo install -o extrabet-bot -g extrabet-bot -m 0600 /dev/null /var/lib/extrabet-bonus-bot/backoffice.token
 sudo editor /etc/extrabet-bonus-bot.env
 sudo cp deployment/extrabet-bonus-bot.service /etc/systemd/system/
 sudo systemctl daemon-reload
