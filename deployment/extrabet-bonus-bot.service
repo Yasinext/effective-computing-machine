@@ -1,0 +1,22 @@
+[Unit]
+Description=Extrabet registration bonus checker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=extrabet-bot
+Group=extrabet-bot
+WorkingDirectory=/opt/extrabet-bonus-bot
+EnvironmentFile=/etc/extrabet-bonus-bot.env
+ExecStart=/opt/extrabet-bonus-bot/.venv/bin/python -m app.main
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/extrabet-bonus-bot
+
+[Install]
+WantedBy=multi-user.target
