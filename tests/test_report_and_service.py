@@ -59,7 +59,22 @@ def test_one_member_error_does_not_stop_others_and_one_message_per_cycle(setting
     first = service.run_cycle(now)
     second = service.run_cycle(now)
     assert "Kontrol edilen: 4 üye" in first
-    assert "API hatası: 1" in first
-    assert "Bonus kaydı bulunan: 3" in first
+    assert first.count("API kontrolü tamamlanamadı") == 1
+    assert first.count("Bonus kaydı bulundu") == 3
+    assert "Genel sonuç" not in first
     assert first == second
     assert len(telegram.messages) == 2
+
+
+def test_requested_compact_report_wording() -> None:
+    results = [CheckResult(make_client(1), CheckStatus.BONUS_BULUNAMADI)]
+    message = build_report(
+        results,
+        datetime.fromisoformat("2026-11-06T12:20:00+03:00"),
+        datetime.fromisoformat("2026-11-06T12:40:00+03:00"),
+    )
+    assert message.startswith("KONTROL RAPORU\n")
+    assert "EXTRABET" not in message
+    assert "❌ FS Yansıması bulunamadı." in message
+    assert "Bonus kaydı bulunamadı" not in message
+    assert "Genel sonuç" not in message

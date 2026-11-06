@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import html
-from collections import Counter
 from datetime import datetime
 
 from .models import CheckResult, CheckStatus
@@ -16,7 +15,7 @@ def _result_lines(result: CheckResult) -> list[str]:
     if status == CheckStatus.BONUS_ISTEMIYOR:
         return ["Bonus tercihi: Deneme bonusu istemiyorum", "Sonuç: Bonus talep edilmemiş."]
     if status == CheckStatus.BONUS_BULUNAMADI:
-        return ["Bonus: Bulunamadı", "Sonuç: ❌ Bonus kaydı bulunamadı."]
+        return ["Sonuç: ❌ FS Yansıması bulunamadı."]
     if status == CheckStatus.INCELEME_GEREKLI:
         return ["Bonus: Kesinleştirilemedi", "Sonuç: Kontrol gerekli."]
     return ["Bonus: Kontrol edilemedi", "Sonuç: ❌ API kontrolü tamamlanamadı."]
@@ -24,7 +23,7 @@ def _result_lines(result: CheckResult) -> list[str]:
 
 def build_report(results: list[CheckResult], checked_at: datetime, next_run: datetime) -> str:
     lines = [
-        "EXTRABET | BONUS KONTROL RAPORU",
+        "KONTROL RAPORU",
         "",
         f"Tarih: {checked_at:%d.%m.%Y}",
         f"Kontrol saati: {checked_at:%H:%M}",
@@ -37,16 +36,8 @@ def build_report(results: list[CheckResult], checked_at: datetime, next_run: dat
         lines.extend(_result_lines(result))
         lines.append("")
 
-    counts = Counter(result.status for result in results)
     lines.extend(
         [
-            "Genel sonuç",
-            f"Bonus kaydı bulunan: {counts[CheckStatus.BONUS_BULUNDU]}",
-            f"Bonus istemeyen: {counts[CheckStatus.BONUS_ISTEMIYOR]}",
-            f"Bonus bulunamayan: {counts[CheckStatus.BONUS_BULUNAMADI]}",
-            f"Kontrol gerekli: {counts[CheckStatus.INCELEME_GEREKLI]}",
-            f"API hatası: {counts[CheckStatus.API_HATASI]}",
-            "",
             f"Sonraki kontrol: {next_run:%H:%M}",
         ]
     )
@@ -56,7 +47,7 @@ def build_report(results: list[CheckResult], checked_at: datetime, next_run: dat
 def build_cycle_error_report(checked_at: datetime, next_run: datetime) -> str:
     return "\n".join(
         [
-            "EXTRABET | BONUS KONTROL RAPORU",
+            "KONTROL RAPORU",
             "",
             f"Tarih: {checked_at:%d.%m.%Y}",
             f"Kontrol saati: {checked_at:%H:%M}",
