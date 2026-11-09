@@ -8,26 +8,16 @@ from .models import CheckResult, CheckStatus
 ALLOWED_EMOJIS = {"✅", "❌"}
 
 
-def _compact_result(result: CheckResult) -> str:
-    status = result.status
-    if status == CheckStatus.BONUS_BULUNDU:
-        return f"✅ {html.escape(result.bonus_name or 'Bonus kaydı bulundu')}"
-    if status == CheckStatus.BONUS_ISTEMIYOR:
-        return "Deneme bonusu istemiyorum"
-    if status == CheckStatus.BONUS_BULUNAMADI:
-        return "❌ FS Yansıması bulunamadı."
-    if status == CheckStatus.INCELEME_GEREKLI:
-        return "Kontrol gerekli."
-    return "❌ API kontrolü tamamlanamadı."
-
-
 STATUS_GROUPS = (
-    (CheckStatus.BONUS_BULUNDU, "Bonus kaydı bulunan"),
-    (CheckStatus.BONUS_ISTEMIYOR, "Bonus istemeyen"),
-    (CheckStatus.BONUS_BULUNAMADI, "FS yansıması bulunamayan"),
+    (CheckStatus.BONUS_BULUNAMADI, "❌ FS Yansıması bulunamadı."),
     (CheckStatus.INCELEME_GEREKLI, "Kontrol gerekli"),
-    (CheckStatus.API_HATASI, "API hatası"),
+    (CheckStatus.API_HATASI, "❌ API kontrolü tamamlanamadı."),
 )
+
+
+def _member_line(result: CheckResult) -> str:
+    login = html.escape(result.client.login, quote=True)
+    return f"- {login} ({result.client.client_id})"
 
 
 def build_report(results: list[CheckResult], checked_at: datetime, next_run: datetime) -> str:
@@ -39,16 +29,24 @@ def build_report(results: list[CheckResult], checked_at: datetime, next_run: dat
         f"Kontrol edilen: {len(results)} üye",
         "",
     ]
+    bonus_groups: dict[str, list[CheckResult]] = {}
+    for result in results:
+        if result.status != CheckStatus.BONUS_BULUNDU:
+            continue
+        bonus_name = result.bonus_name or "Bonus kaydı bulundu"
+        bonus_groups.setdefault(bonus_name, []).append(result)
+
+    for bonus_name, grouped in bonus_groups.items():
+        lines.append(f"✅ {html.escape(bonus_name)}")
+        lines.extend(_member_line(result) for result in grouped)
+        lines.append("")
+
     for status, heading in STATUS_GROUPS:
         grouped = [result for result in results if result.status == status]
         if not grouped:
             continue
         lines.append(heading)
-        for result in grouped:
-            login = html.escape(result.client.login, quote=True)
-            lines.append(
-                f"- {login} ({result.client.client_id}) — {_compact_result(result)}"
-            )
+        lines.extend(_member_line(result) for result in grouped)
         lines.append("")
 
     lines.extend(

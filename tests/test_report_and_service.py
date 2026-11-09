@@ -64,7 +64,7 @@ def test_one_member_error_does_not_stop_others_and_one_message_per_cycle(setting
     second = service.run_cycle(now)
     assert "Kontrol edilen: 4 üye" in first
     assert first.count("API kontrolü tamamlanamadı") == 1
-    assert first.count("Pragmatic Kayıt FreeSpin 500") == 3
+    assert first.count("Pragmatic Kayıt FreeSpin 500") == 1
     assert "Genel sonuç" not in first
     assert first == second
     assert len(telegram.messages) == 2
@@ -97,7 +97,7 @@ def test_requested_compact_report_wording() -> None:
     assert "Genel sonuç" not in message
 
 
-def test_same_statuses_are_grouped_into_compact_single_lines() -> None:
+def test_bonus_results_are_grouped_by_name_and_no_bonus_preference_is_hidden() -> None:
     results = [
         CheckResult(make_client(1, "one"), CheckStatus.BONUS_ISTEMIYOR),
         CheckResult(make_client(2, "two"), CheckStatus.BONUS_ISTEMIYOR),
@@ -106,15 +106,30 @@ def test_same_statuses_are_grouped_into_compact_single_lines() -> None:
             CheckStatus.BONUS_BULUNDU,
             "Pragmatic Kayıt FreeSpin 500",
         ),
+        CheckResult(
+            make_client(4, "four"),
+            CheckStatus.BONUS_BULUNDU,
+            "Pragmatic Kayıt FreeSpin 500",
+        ),
+        CheckResult(
+            make_client(5, "five"),
+            CheckStatus.BONUS_BULUNDU,
+            "Kayıt Özel 500 FreeBet",
+        ),
     ]
     message = build_report(
         results,
         datetime.fromisoformat("2026-11-06T12:20:00+03:00"),
         datetime.fromisoformat("2026-11-06T12:40:00+03:00"),
     )
-    assert message.count("Bonus istemeyen") == 1
-    assert "- one (1) — Deneme bonusu istemiyorum" in message
-    assert "- two (2) — Deneme bonusu istemiyorum" in message
-    assert "- three (3) — ✅ Pragmatic Kayıt FreeSpin 500" in message
+    assert "Bonus istemeyen" not in message
+    assert "Deneme bonusu istemiyorum" not in message
+    assert "one (1)" not in message
+    assert "two (2)" not in message
+    assert message.count("✅ Pragmatic Kayıt FreeSpin 500") == 1
+    assert "- three (3)" in message
+    assert "- four (4)" in message
+    assert message.count("✅ Kayıt Özel 500 FreeBet") == 1
+    assert "- five (5)" in message
     assert "Bonus tercihi:" not in message
     assert "Sonuç:" not in message
