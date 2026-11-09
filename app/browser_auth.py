@@ -117,6 +117,8 @@ def main() -> int:
             headless=False,
             args=[
                 "--disable-dev-shm-usage",
+                "--disable-crash-reporter",
+                "--disable-crashpad",
                 "--disable-sync",
                 "--disable-translate",
                 "--disable-features=PasswordManagerOnboarding,PasswordLeakDetection",
