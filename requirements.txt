@@ -2,3 +2,4 @@ APScheduler==3.11.0
 httpx==0.28.1
 python-dotenv==1.1.1
 pytest==8.4.2
+playwright==1.56.0

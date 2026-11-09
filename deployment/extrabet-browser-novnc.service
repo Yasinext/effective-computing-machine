@@ -1,0 +1,15 @@
+[Unit]
+Description=Extrabet temporary local-only noVNC bridge
+After=extrabet-browser-vnc.service
+Requires=extrabet-browser-vnc.service
+
+[Service]
+Type=simple
+User=extrabet-bot
+Group=extrabet-bot
+ExecStart=/usr/bin/websockify --web=/usr/share/novnc/ 127.0.0.1:6080 127.0.0.1:5900
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+

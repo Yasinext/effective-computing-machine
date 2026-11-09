@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Protocol
 
 from .bonus_checker import check_client
@@ -27,8 +28,22 @@ class BonusCheckService:
         self.settings = settings
         self.backoffice = backoffice
         self.telegram = telegram
+        self._loaded_token = settings.backoffice_token
+
+    def _reload_token_file(self) -> None:
+        token_file: Path | None = self.settings.backoffice_token_file
+        if token_file is None or not token_file.is_file():
+            return
+        token = token_file.read_text(encoding="utf-8").strip()
+        if token and token != self._loaded_token:
+            update_token = getattr(self.backoffice, "update_token", None)
+            if callable(update_token):
+                update_token(token)
+                self._loaded_token = token
+                LOGGER.info("Backoffice token dosyadan yeniden yüklendi")
 
     def run_cycle(self, now: datetime | None = None) -> str:
+        self._reload_token_file()
         checked_at = (now or datetime.now(self.settings.report_timezone)).astimezone(
             self.settings.report_timezone
         )

@@ -37,6 +37,10 @@ class FakeTelegram:
 class FakeBackoffice:
     def __init__(self) -> None:
         self.failed_client = 2
+        self.updated_tokens: list[str] = []
+
+    def update_token(self, token: str) -> None:
+        self.updated_tokens.append(token)
 
     def get_clients(self, max_rows: int, **kwargs: object) -> list[dict]:
         return [
@@ -64,6 +68,19 @@ def test_one_member_error_does_not_stop_others_and_one_message_per_cycle(setting
     assert "Genel sonuç" not in first
     assert first == second
     assert len(telegram.messages) == 2
+
+
+def test_cycle_reloads_changed_token_file(settings, tmp_path) -> None:
+    from dataclasses import replace
+
+    token_file = tmp_path / "backoffice.token"
+    token_file.write_text("new-token\n", encoding="utf-8")
+    configured = replace(settings, backoffice_token_file=token_file)
+    telegram = FakeTelegram()
+    backoffice = FakeBackoffice()
+    service = BonusCheckService(configured, backoffice, telegram)
+    service.run_cycle(datetime.fromisoformat("2026-11-06T12:20:00+03:00"))
+    assert backoffice.updated_tokens == ["new-token"]
 
 
 def test_requested_compact_report_wording() -> None:

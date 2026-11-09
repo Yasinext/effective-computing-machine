@@ -1,0 +1,25 @@
+[Unit]
+Description=Extrabet Backoffice persistent authentication browser
+After=network-online.target extrabet-browser-display.service
+Requires=extrabet-browser-display.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=extrabet-bot
+Group=extrabet-bot
+WorkingDirectory=/opt/extrabet-bonus-bot
+EnvironmentFile=/etc/extrabet-bonus-bot.env
+Environment=DISPLAY=:99
+Environment=PLAYWRIGHT_BROWSERS_PATH=/var/lib/extrabet-bonus-bot/ms-playwright
+ExecStart=/opt/extrabet-bonus-bot/.venv/bin/python -m app.browser_auth
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/extrabet-bonus-bot
+
+[Install]
+WantedBy=multi-user.target
