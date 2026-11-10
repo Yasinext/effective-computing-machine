@@ -15,6 +15,8 @@ Environment=HOME=/var/lib/extrabet-bonus-bot
 Environment=XDG_CONFIG_HOME=/var/lib/extrabet-bonus-bot/.config
 Environment=XDG_CACHE_HOME=/var/lib/extrabet-bonus-bot/.cache
 Environment=PLAYWRIGHT_BROWSERS_PATH=/var/lib/extrabet-bonus-bot/ms-playwright
+LoadCredential=backoffice_username:/etc/extrabet-bonus-bot-credentials/backoffice_username
+LoadCredential=backoffice_password:/etc/extrabet-bonus-bot-credentials/backoffice_password
 ExecStart=/opt/extrabet-bonus-bot/.venv/bin/python -m app.browser_auth
 Restart=on-failure
 RestartSec=10

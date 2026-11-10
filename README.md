@@ -59,9 +59,21 @@ Kullanıcı adları değiştirilebilir olduğundan sayısal Telegram kullanıcı
 
 ### Kalıcı tarayıcıyla otomatik token yenileme
 
-İsteğe bağlı tarayıcı servisi, VPS'deki kalıcı Chromium profilini kullanır. Kullanıcı adı, parola ve MFA uygulama yapılandırmasına yazılmaz. Kullanıcı ilk girişi localhost'a bağlı geçici noVNC ekranında kendisi yapar. Servis yalnız `Client/GetClients` isteğindeki `authentication` başlığını alır, canlı API ile doğrular ve `BACKOFFICE_TOKEN_FILE` dosyasını atomik biçimde günceller.
+İsteğe bağlı tarayıcı servisi, VPS'deki kalıcı Chromium profilini kullanır. Servis Customers sayfasındaki gerçek `Apply/Ara` hareketini varsayılan olarak beş dakikada bir gerçekleştirir. Böylece panelin kendi `Client/GetClients` isteği oturumu aktif tutar. Servis bu isteğin `authentication` başlığını alır, değişmişse canlı API ile doğrular ve `BACKOFFICE_TOKEN_FILE` dosyasını atomik biçimde günceller.
 
-Ana bonus servisi her döngünün başında token dosyasını yeniden okur. Tarayıcı yeni token yakaladığında servisin yeniden başlatılması gerekmez. Tarayıcı sayfası varsayılan olarak 330 dakika sonra yenilenir; yeni token oluşmazsa 10 dakikada bir yeniden dener.
+Kullanıcı adı ve parola kaynak koda veya ortam dosyasına yazılmaz. systemd bunları root tarafından okunabilen ayrı dosyalardan çalışma anında salt okunur kimlik bilgileri olarak servise verir. Panel giriş ekranına düşerse servis yeniden giriş dener. Hatırlanan 2FA geçerli değilse giriş durur ve Telegram grubuna yalnız bir kez manuel giriş gerektiği bildirilir; MFA değeri hiçbir zaman saklanmaz.
+
+Ana bonus servisi her döngünün başında token dosyasını yeniden okur. Tarayıcı yeni token yakaladığında servisin yeniden başlatılması gerekmez. Keepalive işlemi başarısız olursa varsayılan olarak 10 dakika sonra tekrar denenir. Sayfanın 330 dakikalık tam yenilemesi ayrıca korunur.
+
+Kimlik bilgisi dosyalarını kurun; gerçek değerleri kabuk geçmişine veya Git deposuna yazmayın:
+
+```bash
+sudo install -d -o root -g root -m 0700 /etc/extrabet-bonus-bot-credentials
+sudo install -o root -g root -m 0600 /dev/null /etc/extrabet-bonus-bot-credentials/backoffice_username
+sudo install -o root -g root -m 0600 /dev/null /etc/extrabet-bonus-bot-credentials/backoffice_password
+sudo editor /etc/extrabet-bonus-bot-credentials/backoffice_username
+sudo editor /etc/extrabet-bonus-bot-credentials/backoffice_password
+```
 
 İlk giriş için kullanıcı kendi bilgisayarındaki Terminal'de aşağıdaki tüneli açık tutar:
 
@@ -77,7 +89,7 @@ http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale
 
 Backoffice girişi tamamlanıp üyeler sayfası açıldıktan sonra `Client/GetClients` isteği otomatik yakalanır. Geçici VNC/noVNC servisleri daha sonra durdurulabilir; Chromium ve sanal ekran servisleri çalışmaya devam eder.
 
-Tarayıcı profili, token dosyası gibi kimlik doğrulama sırrı kabul edilmelidir. Dizin izinleri `0700` olmalı; profil yedeklere, GitHub'a veya loglara dahil edilmemelidir. VPS disk şifrelemesi sağlayıcı düzeyinde ayrıca etkinleştirilmelidir.
+Tarayıcı profili ve `/etc/extrabet-bonus-bot-credentials` dizini, token dosyası gibi kimlik doğrulama sırrı kabul edilmelidir. Profil dizini `0700`, kimlik bilgisi dosyaları `0600` olmalı; bunlar yedeklere, GitHub'a veya loglara dahil edilmemelidir. VPS disk şifrelemesi sağlayıcı düzeyinde ayrıca etkinleştirilmelidir.
 
 Webhook kullanan bir botta `getUpdates` çalışmayabilir. Bu durumda mevcut bot yönetim yöntemiyle chat ID'yi güvenli biçimde belirleyin; webhook'u üretimde rastgele kaldırmayın.
 
