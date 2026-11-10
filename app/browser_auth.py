@@ -21,7 +21,6 @@ CUSTOMERS_URL = "https://backoffice.betconstruct.com/#/customers"
 GET_CLIENTS_PATH = "/client/getclients"
 APPLY_BUTTON = re.compile(r"^(apply|ara|search)$", re.IGNORECASE)
 LOGIN_BUTTON = re.compile(r"^(sign in|giriş yap|login)$", re.IGNORECASE)
-CLOSE_BUTTON = re.compile(r"close|kapat", re.IGNORECASE)
 EMAIL_PLACEHOLDER = re.compile(r"^(email|e-mail|e-posta)$", re.IGNORECASE)
 PASSWORD_PLACEHOLDER = re.compile(r"^(password|parola|şifre)$", re.IGNORECASE)
 
@@ -129,31 +128,10 @@ def trigger_getclients(page) -> None:
 
     page.wait_for_timeout(3000)
     page.keyboard.press("Escape")
-    modal_closed = False
     close_button = page.locator("#close-btn")
     if close_button.is_visible():
         close_button.click(timeout=30_000)
         close_button.wait_for(state="hidden", timeout=10_000)
-        modal_closed = True
-    for frame in page.frames:
-        if modal_closed:
-            break
-        candidates = (
-            frame.get_by_role("button", name=CLOSE_BUTTON),
-            frame.get_by_text(CLOSE_BUTTON),
-        )
-        for candidate in candidates:
-            for close_button in candidate.all():
-                if not close_button.is_visible():
-                    continue
-                close_button.click(timeout=30_000)
-                close_button.wait_for(state="hidden", timeout=10_000)
-                modal_closed = True
-                break
-            if modal_closed:
-                break
-        if modal_closed:
-            break
 
     apply_button = page.get_by_role("button", name=APPLY_BUTTON).first
     apply_button.wait_for(state="visible", timeout=30_000)
