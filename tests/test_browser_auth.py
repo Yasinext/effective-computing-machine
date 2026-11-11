@@ -113,13 +113,17 @@ class FakePage:
         self.password = FakeLocator()
         self.button = FakeLocator()
         self.close_button = FakeLocator()
+        self.filter_toggle = FakeLocator()
         self.keyboard = FakeKeyboard()
         self.frames = [self]
         self.goto_urls: list[str] = []
+        self.reload_count = 0
 
     def locator(self, selector: str) -> FakeLocator:
         if selector == "#close-btn":
             return self.close_button
+        if "filterOpenState" in selector:
+            return self.filter_toggle
         return self.password if "password" in selector else self.email
 
     def get_by_placeholder(self, placeholder) -> FakeLocator:
@@ -141,6 +145,9 @@ class FakePage:
         self.goto_urls.append(url)
         self.url = url
 
+    def reload(self, **kwargs) -> None:
+        self.reload_count += 1
+
     def expect_request(self, predicate, **kwargs) -> FakeExpectation:
         return FakeExpectation(predicate)
 
@@ -153,10 +160,17 @@ def test_attempt_login_fills_credentials_without_logging_or_storing_them() -> No
     assert page.button.clicked == 1
 
 
-def test_trigger_getclients_navigates_to_customers_and_clicks_apply() -> None:
+def test_trigger_getclients_navigates_to_customers_and_submits_username_probe() -> None:
     page = FakePage("https://backoffice.betconstruct.com/")
     trigger_getclients(page)
     assert page.goto_urls == ["https://backoffice.betconstruct.com/#/customers"]
-    assert page.keyboard.keys == ["Escape"]
-    assert page.close_button.clicked == 1
+    assert page.email.filled[0].startswith("__session_keepalive_")
+    assert page.button.clicked == 1
+
+
+def test_trigger_getclients_reuses_existing_customers_page() -> None:
+    page = FakePage("https://backoffice.betconstruct.com/#/customers")
+    trigger_getclients(page)
+    assert page.reload_count == 0
+    assert page.email.filled[0].startswith("__session_keepalive_")
     assert page.button.clicked == 1

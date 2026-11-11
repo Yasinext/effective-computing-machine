@@ -19,7 +19,7 @@ from .token_control import TOKEN_PATTERN, store_token
 LOGGER = logging.getLogger(__name__)
 CUSTOMERS_URL = "https://backoffice.betconstruct.com/#/customers"
 GET_CLIENTS_PATH = "/client/getclients"
-APPLY_BUTTON = re.compile(r"^(apply|ara|search)$", re.IGNORECASE)
+APPLY_BUTTON = re.compile(r"^apply$", re.IGNORECASE)
 LOGIN_BUTTON = re.compile(r"^(sign in|giriş yap|login)$", re.IGNORECASE)
 EMAIL_PLACEHOLDER = re.compile(r"^(email|e-mail|e-posta)$", re.IGNORECASE)
 PASSWORD_PLACEHOLDER = re.compile(r"^(password|parola|şifre)$", re.IGNORECASE)
@@ -121,20 +121,22 @@ def attempt_login(page, username: str, password: str) -> str:
 
 
 def trigger_getclients(page) -> None:
-    if not page.url.startswith("https://backoffice.betconstruct.com/"):
-        page.goto(CUSTOMERS_URL, wait_until="domcontentloaded", timeout=60_000)
     if not page.url.startswith(CUSTOMERS_URL):
         page.goto(CUSTOMERS_URL, wait_until="domcontentloaded", timeout=60_000)
 
     page.wait_for_timeout(3000)
-    page.keyboard.press("Escape")
     close_button = page.locator("#close-btn")
     if close_button.is_visible():
         close_button.click(timeout=30_000)
         close_button.wait_for(state="hidden", timeout=10_000)
 
+    username = page.locator('input[ng-if="bcType === \'text\'"]:visible').first
+    if not username.is_visible():
+        page.locator('[ng-click="filterOpenState = !filterOpenState"]').first.click(timeout=30_000)
+        username.wait_for(state="visible", timeout=30_000)
+
+    username.fill(f"__session_keepalive_{int(time.time())}__")
     apply_button = page.get_by_role("button", name=APPLY_BUTTON).first
-    apply_button.wait_for(state="visible", timeout=30_000)
     with page.expect_request(lambda request: is_getclients_url(request.url), timeout=30_000):
         apply_button.click(timeout=30_000)
 
@@ -308,8 +310,9 @@ def main() -> int:
                 if stopping:
                     break
                 LOGGER.warning(
-                    "Backoffice keepalive işlemi başarısız error=%s",
+                    "Backoffice keepalive işlemi başarısız error=%s detail=%s",
                     type(exc).__name__,
+                    str(exc).splitlines()[0],
                 )
                 if page.is_closed():
                     page = context.new_page()
