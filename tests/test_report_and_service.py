@@ -29,9 +29,13 @@ def test_report_escapes_login_and_contains_no_sensitive_fields() -> None:
 class FakeTelegram:
     def __init__(self) -> None:
         self.messages: list[str] = []
+        self.direct_messages: list[tuple[int, str]] = []
 
     def send(self, message: str) -> None:
         self.messages.append(message)
+
+    def send_to(self, chat_id: int, message: str) -> None:
+        self.direct_messages.append((chat_id, message))
 
 
 class FakeBackoffice:
@@ -81,6 +85,22 @@ def test_cycle_reloads_changed_token_file(settings, tmp_path) -> None:
     service = BonusCheckService(configured, backoffice, telegram)
     service.run_cycle(datetime.fromisoformat("2026-11-06T12:20:00+03:00"))
     assert backoffice.updated_tokens == ["new-token"]
+
+
+def test_client_list_api_failure_is_sent_only_to_admin_private_chat(settings) -> None:
+    from app.errors import ApiError
+
+    class FailedBackoffice(FakeBackoffice):
+        def get_clients(self, max_rows: int, **kwargs: object) -> list[dict]:
+            raise ApiError("unavailable")
+
+    telegram = FakeTelegram()
+    service = BonusCheckService(settings, FailedBackoffice(), telegram)
+    message = service.run_cycle(datetime.fromisoformat("2026-11-11T10:30:00+03:00"))
+
+    assert "API kontrolü tamamlanamadı" in message
+    assert telegram.messages == []
+    assert telegram.direct_messages == [(7265030719, message)]
 
 
 def test_requested_compact_report_wording() -> None:

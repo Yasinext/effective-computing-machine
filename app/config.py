@@ -31,12 +31,17 @@ def _id_set(name: str) -> frozenset[int]:
         raise ConfigurationError(f"{name} virgülle ayrılmış sayısal ID'ler içermelidir") from exc
 
 
-def _username_set(name: str) -> frozenset[str]:
-    return frozenset(
-        item.strip().lstrip("@").lower()
-        for item in os.getenv(name, "").split(",")
-        if item.strip().lstrip("@")
-    )
+def _optional_integer(name: str) -> int | None:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return None
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ConfigurationError(f"{name} sayısal bir ID olmalıdır") from exc
+    if value < 1:
+        raise ConfigurationError(f"{name} pozitif bir ID olmalıdır")
+    return value
 
 
 def _boolean(name: str, default: bool = False) -> bool:
@@ -68,7 +73,7 @@ class Settings:
     get_clients_max_pages: int
     get_clients_created_order_verified: bool
     http_retry_count: int
-    telegram_admin_usernames: frozenset[str]
+    telegram_admin_user_id: int | None
 
     @classmethod
     def from_env(cls, env_file: str | Path | None = None) -> "Settings":
@@ -112,7 +117,7 @@ class Settings:
                 "GET_CLIENTS_CREATED_ORDER_VERIFIED", False
             ),
             http_retry_count=_integer("HTTP_RETRY_COUNT", 3),
-            telegram_admin_usernames=_username_set("TELEGRAM_ADMIN_USERNAMES"),
+            telegram_admin_user_id=_optional_integer("TELEGRAM_ADMIN_USER_ID"),
         )
 
     def validate_runtime_secrets(self) -> None:

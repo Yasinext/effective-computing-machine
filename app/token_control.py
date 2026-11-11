@@ -37,14 +37,14 @@ class TokenControl:
     def __init__(
         self,
         telegram,
-        allowed_usernames: frozenset[str],
+        allowed_user_id: int,
         validator: Callable[[str], None],
         installer: Callable[[str], None],
         stop_event: Event,
         pending_seconds: int = 60,
     ) -> None:
         self.telegram = telegram
-        self.allowed_usernames = allowed_usernames
+        self.allowed_user_id = allowed_user_id
         self.validator = validator
         self.installer = installer
         self.stop_event = stop_event
@@ -65,10 +65,9 @@ class TokenControl:
         sender = message.get("from")
         if not isinstance(chat, dict) or chat.get("type") != "private" or not isinstance(sender, dict):
             return
-        username = sender.get("username")
-        if not isinstance(username, str) or username.lower() not in self.allowed_usernames:
-            return
         user_id = sender.get("id")
+        if user_id != self.allowed_user_id:
+            return
         chat_id = chat.get("id")
         message_id = message.get("message_id")
         text = message.get("text")

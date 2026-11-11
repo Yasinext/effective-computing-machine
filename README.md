@@ -46,16 +46,16 @@ Sürekli mod başlangıçta hemen bir kontrol yapar, ardından sabit 20 dakikal�
 
 ### Özel mesajla Backoffice token yenileme
 
-İsteğe bağlı kontrol kanalı yalnız özel Telegram sohbetinde çalışır. Grup mesajları ve `TELEGRAM_ADMIN_USERNAMES` listesinde olmayan kullanıcılar hiçbir yanıt almadan yok sayılır.
+İsteğe bağlı kontrol kanalı yalnız özel Telegram sohbetinde ve tek bir sayısal kullanıcı ID'si için çalışır. Grup mesajları ile diğer kullanıcılar hiçbir yanıt almadan yok sayılır. Üye listesi API'den güvenli biçimde alınamazsa hata raporu gruba gönderilmez; yalnız bu kullanıcıya özel mesaj olarak iletilir.
 
 ```dotenv
 BACKOFFICE_TOKEN_FILE=/var/lib/extrabet-bonus-bot/backoffice.token
-TELEGRAM_ADMIN_USERNAMES=denizgmb,ayhanq7
+TELEGRAM_ADMIN_USER_ID=7265030719
 ```
 
 Yetkili kullanıcı botla özel konuşmada `/token` gönderir. Bot 60 saniye içinde gelecek bir sonraki özel mesajı aday token olarak alır, mesajı silmeye çalışır ve token'ı canlı Backoffice isteğiyle doğrular. Yalnız başarılı doğrulamadan sonra izinleri `0600` olan token dosyasını atomik biçimde değiştirir ve yeni token'ı servis yeniden başlamadan kullanır. Token hiçbir cevap veya log içinde gösterilmez.
 
-Kullanıcı adları değiştirilebilir olduğundan sayısal Telegram kullanıcı ID'leri daha güçlü bir yetkilendirme yöntemidir. Mevcut kullanıcı-adı modu operatörün açık tercihiyle sağlanmıştır; listedeki hesapların kullanıcı adı değişiklikleri düzenli kontrol edilmelidir.
+Yetkilendirme Telegram etiketine değil, değişmeyen sayısal kullanıcı ID'sine göre yapılır.
 
 ### Kalıcı tarayıcıyla otomatik token yenileme
 

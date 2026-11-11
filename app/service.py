@@ -21,6 +21,7 @@ class BackofficeProtocol(Protocol):
 
 class TelegramProtocol(Protocol):
     def send(self, message: str) -> None: ...
+    def send_to(self, chat_id: str | int, message: str) -> None: ...
 
 
 class BonusCheckService:
@@ -73,5 +74,10 @@ class BonusCheckService:
         except ApiError as exc:
             LOGGER.error("Üye listesi kontrolü başarısız error=%s", type(exc).__name__)
             message = build_cycle_error_report(checked_at, next_run)
+            if self.settings.telegram_admin_user_id is not None:
+                self.telegram.send_to(self.settings.telegram_admin_user_id, message)
+            else:
+                LOGGER.error("API hata raporu gönderilemedi: TELEGRAM_ADMIN_USER_ID tanımlı değil")
+            return message
         self.telegram.send(message)
         return message

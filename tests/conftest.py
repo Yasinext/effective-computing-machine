@@ -28,5 +28,5 @@ def settings() -> Settings:
         get_clients_max_pages=50,
         get_clients_created_order_verified=False,
         http_retry_count=1,
-        telegram_admin_usernames=frozenset(),
+        telegram_admin_user_id=7265030719,
     )

@@ -52,7 +52,7 @@ def main() -> int:
                 service.run_cycle()
                 return 0
             service.run_cycle()
-            if settings.telegram_admin_usernames and settings.backoffice_token_file is not None:
+            if settings.telegram_admin_user_id is not None and settings.backoffice_token_file is not None:
                 def validate_candidate(token: str) -> None:
                     with BackofficeClient(
                         settings.backoffice_base_url,
@@ -68,7 +68,7 @@ def main() -> int:
 
                 control = TokenControl(
                     telegram,
-                    settings.telegram_admin_usernames,
+                    settings.telegram_admin_user_id,
                     validate_candidate,
                     install_candidate,
                     control_stop,

@@ -17,14 +17,14 @@ class FakeTelegram:
         self.deleted.append((chat_id, message_id))
 
 
-def update(username: str, text: str, *, chat_type: str = "private", message_id: int = 1) -> dict:
+def update(user_id: int, text: str, *, chat_type: str = "private", message_id: int = 1) -> dict:
     return {
         "update_id": message_id,
         "message": {
             "message_id": message_id,
             "text": text,
             "chat": {"id": 100, "type": chat_type},
-            "from": {"id": 200, "username": username},
+            "from": {"id": user_id, "username": "changeable_tag"},
         },
     }
 
@@ -32,19 +32,19 @@ def update(username: str, text: str, *, chat_type: str = "private", message_id: 
 def control(telegram: FakeTelegram, installed: list[str]) -> TokenControl:
     return TokenControl(
         telegram,
-        frozenset({"authorized_user"}),
+        7265030719,
         lambda token: None,
         installed.append,
         Event(),
     )
 
 
-def test_unauthorized_username_is_silently_ignored() -> None:
+def test_unauthorized_user_id_is_silently_ignored() -> None:
     telegram = FakeTelegram()
     installed: list[str] = []
     instance = control(telegram, installed)
-    instance.handle_update(update("intruder", "/token"))
-    instance.handle_update(update("intruder", "a" * 64, message_id=2))
+    instance.handle_update(update(200, "/token"))
+    instance.handle_update(update(200, "a" * 64, message_id=2))
     assert telegram.sent == []
     assert telegram.deleted == []
     assert installed == []
@@ -54,18 +54,18 @@ def test_group_command_is_silently_ignored_even_for_authorized_user() -> None:
     telegram = FakeTelegram()
     installed: list[str] = []
     instance = control(telegram, installed)
-    instance.handle_update(update("authorized_user", "/token", chat_type="group"))
+    instance.handle_update(update(7265030719, "/token", chat_type="group"))
     assert telegram.sent == []
     assert telegram.deleted == []
 
 
-def test_authorized_private_user_can_replace_token_case_insensitively() -> None:
+def test_authorized_private_user_id_can_replace_token_regardless_of_tag() -> None:
     telegram = FakeTelegram()
     installed: list[str] = []
     instance = control(telegram, installed)
-    instance.handle_update(update("Authorized_User", "/token"))
+    instance.handle_update(update(7265030719, "/token"))
     candidate = "a" * 64
-    instance.handle_update(update("Authorized_User", candidate, message_id=2))
+    instance.handle_update(update(7265030719, candidate, message_id=2))
     assert installed == [candidate]
     assert telegram.deleted == [(100, 1), (100, 2)]
     assert telegram.sent[-1] == (100, "Backoffice token doğrulandı ve güncellendi.")
@@ -79,11 +79,11 @@ def test_install_failure_is_reported_without_crashing() -> None:
 
     instance = TokenControl(
         telegram,
-        frozenset({"authorized_user"}),
+        7265030719,
         lambda token: None,
         fail_install,
         Event(),
     )
-    instance.handle_update(update("authorized_user", "/token"))
-    instance.handle_update(update("authorized_user", "a" * 64, message_id=2))
+    instance.handle_update(update(7265030719, "/token"))
+    instance.handle_update(update(7265030719, "a" * 64, message_id=2))
     assert telegram.sent[-1] == (100, "Token güncellenemedi; mevcut token korunuyor.")
